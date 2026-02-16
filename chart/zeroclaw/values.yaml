@@ -65,11 +65,11 @@ httpRoute:
 # Example:
 # resources:
 #   requests:
-#     cpu: 100m
-#     memory: 512Mi
+#     cpu: 10m
+#     memory: 10Mi
 #   limits:
-#     cpu: 500m
-#     memory: 2Gi
+#     cpu: 100m
+#     memory: 100Mi
 resources: {}
 
 nodeSelector: {}
@@ -90,9 +90,8 @@ config:
   # Disable when running behind a ClusterIP / ingress where network-level auth suffices.
   requirePairing: false
 
-  # Optional: Model override (AWS Bedrock ID)
-  # Anthropic: https://platform.claude.com/docs/en/build-with-claude/claude-on-amazon-bedrock#api-model-ids
-  # Example: anthropic/claude-sonnet-4-20250514
+  # Optional: Model override
+  # Example: claude-sonnet-4-5-20250929
   model: ""
 
 secret:

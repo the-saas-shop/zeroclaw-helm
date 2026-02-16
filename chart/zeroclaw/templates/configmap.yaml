@@ -12,7 +12,7 @@ data:
     {{- if .Values.config.model }}
     default_model = {{ .Values.config.model | quote }}
     {{- else }}
-    default_model = "anthropic/claude-sonnet-4-20250514"
+    default_model = "claude-sonnet-4-5-20250929"
     {{- end }}
     default_temperature = 0.7
 
