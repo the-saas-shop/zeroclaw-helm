@@ -88,7 +88,7 @@ config:
   mode: gateway
   provider: openrouter
   allowPublicBind: true
-  model: anthropic/claude-sonnet-4-20250514
+  model: claude-sonnet-4-5-20250929
 
 secret:
   create: false
@@ -101,7 +101,7 @@ secret:
 config:
   mode: daemon
   provider: anthropic
-  model: anthropic/claude-sonnet-4-20250514
+  model: claude-sonnet-4-5-20250929
 
 secret:
   create: true
