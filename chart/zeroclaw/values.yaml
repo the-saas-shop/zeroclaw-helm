@@ -1,0 +1,130 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/theonlyhennygod/zeroclaw
+  pullPolicy: IfNotPresent
+  tag: latest
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext:
+  fsGroup: 65534
+  fsGroupChangePolicy: "OnRootMismatch"
+
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 65534
+  runAsGroup: 65534
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false
+  capabilities:
+    drop:
+      - ALL
+
+service:
+  type: ClusterIP
+  port: 3000
+  targetPort: 3000
+  annotations: {}
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: zeroclaw.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+httpRoute:
+  enabled: false
+  annotations: {}
+  parentRefs: []
+  hostnames: []
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      filters: []
+
+# Resources are optional and disabled by default.
+# For production, set requests/limits to avoid noisy-neighbor issues.
+# Example:
+# resources:
+#   requests:
+#     cpu: 100m
+#     memory: 512Mi
+#   limits:
+#     cpu: 500m
+#     memory: 2Gi
+resources: {}
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+config:
+  # Runtime mode: "gateway" (HTTP webhook server only) or "daemon" (full autonomous runtime)
+  # gateway: bare webhook API — you call /webhook with a bearer token
+  # daemon: starts gateway + channels (Telegram, Discord, …) + heartbeat + memory
+  mode: gateway
+
+  # Options: openrouter, openai, anthropic, ollama
+  provider: openrouter
+  allowPublicBind: true
+
+  # Require 6-digit pairing code exchange for bearer token (gateway security).
+  # Disable when running behind a ClusterIP / ingress where network-level auth suffices.
+  requirePairing: false
+
+  # Optional: Model override (AWS Bedrock ID)
+  # Anthropic: https://platform.claude.com/docs/en/build-with-claude/claude-on-amazon-bedrock#api-model-ids
+  # Example: anthropic/claude-sonnet-4-20250514
+  model: ""
+
+secret:
+  create: true
+  apiKey: ""
+  existingSecret: ""
+  existingSecretKey: API_KEY
+
+persistence:
+  enabled: true
+  existingClaim: ""
+  accessModes:
+    - ReadWriteOnce
+  size: 10Gi
+  storageClass: ""
+  annotations: {}
+
+probes:
+  liveness:
+    enabled: true
+    path: /health
+    initialDelaySeconds: 20
+    periodSeconds: 20
+    timeoutSeconds: 5
+    failureThreshold: 3
+  readiness:
+    enabled: true
+    path: /health
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+extraEnv: []
+extraEnvFrom: []

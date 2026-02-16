@@ -1,0 +1,162 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "zeroclaw.fullname" . }}
+  labels:
+    {{- include "zeroclaw.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "zeroclaw.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "zeroclaw.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      serviceAccountName: {{ include "zeroclaw.serviceAccountName" . }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      initContainers:
+        - name: init-config
+          image: busybox:1.37
+          command: ["sh", "-c"]
+          args:
+            - |
+              mkdir -p /zeroclaw-data/.zeroclaw /zeroclaw-data/workspace
+              cp /config/config.toml /zeroclaw-data/.zeroclaw/config.toml
+              chown -R 65534:65534 /zeroclaw-data/.zeroclaw
+          volumeMounts:
+            - name: data
+              mountPath: /zeroclaw-data
+            - name: config
+              mountPath: /config
+              readOnly: true
+      containers:
+        - name: zeroclaw
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - zeroclaw
+          args:
+            {{- if eq .Values.config.mode "daemon" }}
+            - daemon
+            {{- else }}
+            - gateway
+            - --port
+            - {{ .Values.service.targetPort | quote }}
+            - --host
+            - "[::]"
+            {{- end }}
+          {{- if eq .Values.config.mode "gateway" }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.targetPort }}
+              protocol: TCP
+          {{- end }}
+          env:
+            - name: PROVIDER
+              value: {{ .Values.config.provider | quote }}
+            - name: ZEROCLAW_GATEWAY_PORT
+              value: {{ .Values.service.targetPort | quote }}
+            - name: ZEROCLAW_ALLOW_PUBLIC_BIND
+              value: {{ ternary "true" "false" .Values.config.allowPublicBind | quote }}
+            {{- if .Values.config.model }}
+            - name: ZEROCLAW_MODEL
+              value: {{ .Values.config.model | quote }}
+            {{- end }}
+            - name: API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "zeroclaw.apiKeySecretName" . }}
+                  key: {{ ternary "API_KEY" .Values.secret.existingSecretKey .Values.secret.create }}
+            {{- with .Values.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- with .Values.extraEnvFrom }}
+          envFrom:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          {{- if .Values.probes.liveness.enabled }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.probes.liveness.path }}
+              port: {{ .Values.service.targetPort }}
+            initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.liveness.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.liveness.failureThreshold }}
+          {{- end }}
+          {{- if .Values.probes.readiness.enabled }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.probes.readiness.path }}
+              port: {{ .Values.service.targetPort }}
+            initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.readiness.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.readiness.failureThreshold }}
+          {{- end }}
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: data
+              mountPath: /zeroclaw-data
+        {{- if eq .Values.config.mode "daemon" }}
+        - name: gateway-proxy
+          image: alpine/socat:1.8.0.3
+          args:
+            - TCP-LISTEN:{{ .Values.service.targetPort }},fork,reuseaddr
+            - TCP:127.0.0.1:8080
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.targetPort }}
+              protocol: TCP
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
+            runAsGroup: 65534
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+        {{- end }}
+      volumes:
+        - name: data
+          {{- if .Values.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "zeroclaw.pvcName" . }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        - name: config
+          configMap:
+            name: {{ include "zeroclaw.fullname" . }}-config
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

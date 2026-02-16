@@ -1,0 +1,7 @@
+{{- if and .Values.ingress.enabled .Values.httpRoute.enabled -}}
+{{- fail "only one of ingress.enabled and httpRoute.enabled can be true" -}}
+{{- end -}}
+
+{{- if not (or (eq .Values.config.mode "gateway") (eq .Values.config.mode "daemon")) -}}
+{{- fail "config.mode must be either \"gateway\" or \"daemon\"" -}}
+{{- end -}}

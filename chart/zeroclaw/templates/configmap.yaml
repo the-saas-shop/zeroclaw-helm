@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "zeroclaw.fullname" . }}-config
+  labels:
+    {{- include "zeroclaw.labels" . | nindent 4 }}
+data:
+  config.toml: |
+    workspace_dir = "/zeroclaw-data/workspace"
+    config_path = "/zeroclaw-data/.zeroclaw/config.toml"
+    default_provider = {{ .Values.config.provider | quote }}
+    {{- if .Values.config.model }}
+    default_model = {{ .Values.config.model | quote }}
+    {{- else }}
+    default_model = "anthropic/claude-sonnet-4-20250514"
+    {{- end }}
+    default_temperature = 0.7
+
+    [gateway]
+    port = {{ .Values.service.targetPort }}
+    host = "[::]"
+    allow_public_bind = {{ .Values.config.allowPublicBind }}
+    require_pairing = {{ .Values.config.requirePairing }}

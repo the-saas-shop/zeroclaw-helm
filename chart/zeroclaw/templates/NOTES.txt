@@ -1,0 +1,46 @@
+ZeroClaw is running in {{ .Values.config.mode | upper }} mode.
+{{- if eq .Values.config.mode "daemon" }}
+  The full autonomous runtime is active (gateway + channels + heartbeat + memory).
+{{- else }}
+  Only the HTTP webhook server is active. Use POST /webhook to send messages.
+{{- end }}
+
+1. Get the application URL:
+{{- if .Values.ingress.enabled }}
+{{- range $host := .Values.ingress.hosts }}
+  http{{ if $.Values.ingress.tls }}s{{ end }}://{{ $host.host }}{{ (index $host.paths 0).path }}
+{{- end }}
+{{- else if .Values.httpRoute.enabled }}
+{{- if .Values.httpRoute.hostnames }}
+{{- range $host := .Values.httpRoute.hostnames }}
+  http://{{ $host }}/
+{{- end }}
+{{- else }}
+  HTTPRoute {{ include "zeroclaw.fullname" . }} created. No hostnames configured; use your Gateway listener host or a matching Host header.
+{{- end }}
+{{- else if contains "NodePort" .Values.service.type }}
+  export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "zeroclaw.fullname" . }})
+  export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+  echo http://$NODE_IP:$NODE_PORT
+{{- else if contains "LoadBalancer" .Values.service.type }}
+  export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "zeroclaw.fullname" . }} -o jsonpath="{.status.loadBalancer.ingress[0].ip}")
+  echo http://$SERVICE_IP:{{ .Values.service.port }}
+{{- else }}
+  kubectl --namespace {{ .Release.Namespace }} port-forward svc/{{ include "zeroclaw.fullname" . }} {{ .Values.service.port }}:{{ .Values.service.port }}
+  echo http://127.0.0.1:{{ .Values.service.port }}
+{{- end }}
+
+{{- if .Values.config.requirePairing }}
+2. Pairing is ENABLED. Retrieve the 6-digit code from pod logs and call POST /pair to obtain a bearer token.
+{{- else }}
+2. Pairing is DISABLED. The /webhook endpoint does not require a bearer token.
+{{- end }}
+3. API key secret options (always wired to `API_KEY` env var):
+   - Create secret from values: set `secret.create=true`, `secret.apiKey`, and optionally `secret.existingSecretKey`
+   - Use existing secret: set `secret.create=false`, `secret.existingSecret`, and `secret.existingSecretKey`
+4. Configuration:
+   - `config.mode`           -> "gateway" (webhook only) or "daemon" (full runtime)
+   - `config.provider`       -> `PROVIDER`
+   - `config.requirePairing` -> gateway pairing toggle (default: false)
+   - `config.allowPublicBind`-> `ZEROCLAW_ALLOW_PUBLIC_BIND`
+   - `config.model`          -> `ZEROCLAW_MODEL` (optional)

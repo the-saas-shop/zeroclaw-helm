@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: '{{ include "zeroclaw.fullname" . }}-test-connection'
+  labels:
+    {{- include "zeroclaw.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    - name: wget
+      image: busybox:1.37
+      command:
+        - sh
+        - -c
+        - wget -qO- http://{{ include "zeroclaw.fullname" . }}:{{ .Values.service.port }}/health
+  restartPolicy: Never
