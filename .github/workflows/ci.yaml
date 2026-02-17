@@ -64,7 +64,9 @@ jobs:
         run: |
           helm template zeroclaw chart/zeroclaw \
             --set config.mode=daemon \
-            --set channels.telegram.enabled=true
+            --set config.channels.telegram.enabled=true \
+            --set channelSecrets.create=true \
+            --set channelSecrets.telegramBotToken=ci-test-token
 
       - name: Install kubeconform
         if: steps.list-changed.outputs.changed == 'true'
