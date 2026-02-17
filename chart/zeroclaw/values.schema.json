@@ -1,0 +1,1630 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ZeroClaw Helm Chart Values",
+  "description": "Schema for ZeroClaw Helm chart values. Reference: https://github.com/niklasfrick/zeroclaw-helm",
+  "type": "object",
+  "properties": {
+    "replicaCount": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 1,
+      "description": "Number of ZeroClaw pod replicas."
+    },
+    "image": {
+      "type": "object",
+      "description": "Container image settings.",
+      "properties": {
+        "repository": {
+          "type": "string",
+          "default": "ghcr.io/theonlyhennygod/zeroclaw",
+          "description": "Container image repository."
+        },
+        "pullPolicy": {
+          "type": "string",
+          "enum": [
+            "Always",
+            "IfNotPresent",
+            "Never"
+          ],
+          "default": "IfNotPresent",
+          "description": "Image pull policy."
+        },
+        "tag": {
+          "type": "string",
+          "default": "latest",
+          "description": "Image tag override. Defaults to the chart appVersion."
+        }
+      },
+      "additionalProperties": false
+    },
+    "imagePullSecrets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "default": [],
+      "description": "List of Docker registry pull secrets."
+    },
+    "nameOverride": {
+      "type": "string",
+      "default": "",
+      "description": "Override the chart name."
+    },
+    "fullnameOverride": {
+      "type": "string",
+      "default": "",
+      "description": "Override the full release name."
+    },
+    "serviceAccount": {
+      "type": "object",
+      "description": "Kubernetes ServiceAccount configuration.",
+      "properties": {
+        "create": {
+          "type": "boolean",
+          "default": true,
+          "description": "Create a dedicated ServiceAccount."
+        },
+        "annotations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "Annotations to add to the ServiceAccount."
+        },
+        "name": {
+          "type": "string",
+          "default": "",
+          "description": "ServiceAccount name override. Generated from fullname if empty."
+        }
+      },
+      "additionalProperties": false
+    },
+    "podAnnotations": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "default": {},
+      "description": "Extra annotations for pods."
+    },
+    "podLabels": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "default": {},
+      "description": "Extra labels for pods."
+    },
+    "podSecurityContext": {
+      "type": "object",
+      "description": "Pod-level security context.",
+      "properties": {
+        "fsGroup": {
+          "type": "integer",
+          "description": "Group ID for filesystem access."
+        },
+        "fsGroupChangePolicy": {
+          "type": "string",
+          "enum": [
+            "OnRootMismatch",
+            "Always"
+          ],
+          "description": "Policy for changing ownership of volumes."
+        }
+      },
+      "additionalProperties": true
+    },
+    "securityContext": {
+      "type": "object",
+      "description": "Container-level security context.",
+      "properties": {
+        "runAsNonRoot": {
+          "type": "boolean",
+          "description": "Require running as non-root user."
+        },
+        "runAsUser": {
+          "type": "integer",
+          "description": "UID to run the container as."
+        },
+        "runAsGroup": {
+          "type": "integer",
+          "description": "GID to run the container as."
+        },
+        "allowPrivilegeEscalation": {
+          "type": "boolean",
+          "description": "Whether the process can gain more privileges."
+        },
+        "readOnlyRootFilesystem": {
+          "type": "boolean",
+          "description": "Mount root filesystem as read-only."
+        },
+        "capabilities": {
+          "type": "object",
+          "properties": {
+            "drop": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Linux capabilities to drop."
+            },
+            "add": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Linux capabilities to add."
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": true
+    },
+    "service": {
+      "type": "object",
+      "description": "Kubernetes Service configuration.",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "ClusterIP",
+            "NodePort",
+            "LoadBalancer"
+          ],
+          "default": "ClusterIP",
+          "description": "Service type."
+        },
+        "port": {
+          "type": "integer",
+          "default": 3000,
+          "description": "Service port."
+        },
+        "targetPort": {
+          "type": "integer",
+          "default": 3000,
+          "description": "Container port the Service forwards to."
+        },
+        "annotations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "Annotations for the Service."
+        }
+      },
+      "additionalProperties": false
+    },
+    "ingress": {
+      "type": "object",
+      "description": "Kubernetes Ingress configuration.",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable Ingress resource creation."
+        },
+        "className": {
+          "type": "string",
+          "default": "",
+          "description": "Ingress class name."
+        },
+        "annotations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "Annotations for the Ingress."
+        },
+        "hosts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "host": {
+                "type": "string",
+                "description": "Hostname for the Ingress rule."
+              },
+              "paths": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "string",
+                      "description": "URL path."
+                    },
+                    "pathType": {
+                      "type": "string",
+                      "enum": [
+                        "Prefix",
+                        "Exact",
+                        "ImplementationSpecific"
+                      ],
+                      "description": "Path matching type."
+                    }
+                  },
+                  "required": [
+                    "path",
+                    "pathType"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "host",
+              "paths"
+            ]
+          },
+          "description": "List of Ingress host rules."
+        },
+        "tls": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "secretName": {
+                "type": "string",
+                "description": "TLS Secret name."
+              },
+              "hosts": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Hostnames covered by this TLS certificate."
+              }
+            }
+          },
+          "default": [],
+          "description": "TLS configuration for the Ingress."
+        }
+      },
+      "additionalProperties": false
+    },
+    "httpRoute": {
+      "type": "object",
+      "description": "Gateway API HTTPRoute configuration.",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable HTTPRoute resource creation."
+        },
+        "annotations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "Annotations for the HTTPRoute."
+        },
+        "parentRefs": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          },
+          "default": [],
+          "description": "Gateway API parent references."
+        },
+        "hostnames": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Hostnames the HTTPRoute matches."
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "matches": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "filters": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "description": "HTTPRoute routing rules."
+        }
+      },
+      "additionalProperties": false
+    },
+    "resources": {
+      "type": "object",
+      "description": "Container resource requests and limits.",
+      "properties": {
+        "requests": {
+          "type": "object",
+          "properties": {
+            "cpu": {
+              "type": "string",
+              "description": "CPU request (e.g. 10m, 100m, 1)."
+            },
+            "memory": {
+              "type": "string",
+              "description": "Memory request (e.g. 64Mi, 256Mi)."
+            }
+          },
+          "additionalProperties": true
+        },
+        "limits": {
+          "type": "object",
+          "properties": {
+            "cpu": {
+              "type": "string",
+              "description": "CPU limit."
+            },
+            "memory": {
+              "type": "string",
+              "description": "Memory limit."
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "nodeSelector": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "default": {},
+      "description": "Node selector for pod scheduling."
+    },
+    "tolerations": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "default": [],
+      "description": "Tolerations for pod scheduling."
+    },
+    "affinity": {
+      "type": "object",
+      "default": {},
+      "description": "Affinity rules for pod scheduling."
+    },
+    "config": {
+      "type": "object",
+      "description": "ZeroClaw application configuration. Maps to ~/.zeroclaw/config.toml inside the container.",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": [
+            "gateway",
+            "daemon"
+          ],
+          "default": "gateway",
+          "description": "Runtime mode. 'gateway' = HTTP webhook server only. 'daemon' = full autonomous runtime with channels, heartbeat, and memory."
+        },
+        "provider": {
+          "type": "string",
+          "enum": [
+            "openrouter",
+            "openai",
+            "anthropic",
+            "ollama",
+            "groq",
+            "mistral",
+            "xai",
+            "deepseek",
+            "together",
+            "fireworks",
+            "perplexity",
+            "cohere",
+            "bedrock",
+            "venice",
+            "custom"
+          ],
+          "default": "openrouter",
+          "description": "LLM provider to use."
+        },
+        "model": {
+          "type": "string",
+          "default": "",
+          "description": "Default model identifier. Leave empty for provider default. Examples: anthropic/claude-sonnet-4-20250514, openai/gpt-4o, google/gemini-2.0-flash."
+        },
+        "temperature": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "default": 0.7,
+          "description": "LLM temperature (0.0 – 1.0)."
+        },
+        "allowPublicBind": {
+          "type": "boolean",
+          "default": true,
+          "description": "Allow binding to non-localhost. Required for Kubernetes pod networking."
+        },
+        "requirePairing": {
+          "type": "boolean",
+          "default": false,
+          "description": "Require 6-digit pairing code exchange for bearer token. Disable when behind ClusterIP / ingress."
+        },
+        "gateway": {
+          "type": "object",
+          "description": "Gateway rate limit and idempotency settings.",
+          "properties": {
+            "pairRateLimitPerMinute": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 10,
+              "description": "Maximum pairing attempts per minute."
+            },
+            "webhookRateLimitPerMinute": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 60,
+              "description": "Maximum webhook requests per minute."
+            },
+            "idempotencyTtlSecs": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 300,
+              "description": "TTL in seconds for idempotency keys."
+            }
+          },
+          "additionalProperties": false
+        },
+        "memory": {
+          "type": "object",
+          "description": "Memory subsystem configuration.",
+          "properties": {
+            "backend": {
+              "type": "string",
+              "enum": [
+                "sqlite",
+                "lucid",
+                "markdown",
+                "none"
+              ],
+              "default": "sqlite",
+              "description": "Memory backend."
+            },
+            "autoSave": {
+              "type": "boolean",
+              "default": true,
+              "description": "Automatically save memory."
+            },
+            "embeddingProvider": {
+              "type": "string",
+              "default": "none",
+              "description": "Embedding provider: 'none', 'openai', or 'custom:URL'."
+            },
+            "embeddingModel": {
+              "type": "string",
+              "default": "text-embedding-3-small",
+              "description": "Embedding model name."
+            },
+            "embeddingDimensions": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1536,
+              "description": "Embedding vector dimensions."
+            },
+            "vectorWeight": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0,
+              "default": 0.7,
+              "description": "Weight for vector similarity in hybrid search."
+            },
+            "keywordWeight": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0,
+              "default": 0.3,
+              "description": "Weight for keyword matching in hybrid search."
+            },
+            "embeddingCacheSize": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 10000,
+              "description": "Maximum number of cached embeddings."
+            },
+            "chunkMaxTokens": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 512,
+              "description": "Maximum tokens per memory chunk."
+            },
+            "hygieneEnabled": {
+              "type": "boolean",
+              "default": true,
+              "description": "Enable automatic memory hygiene (archive/purge)."
+            },
+            "archiveAfterDays": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 7,
+              "description": "Days after which memories are archived."
+            },
+            "purgeAfterDays": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 30,
+              "description": "Days after which archived memories are purged."
+            },
+            "conversationRetentionDays": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 30,
+              "description": "Days to retain conversation history."
+            },
+            "responseCacheEnabled": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable response cache to save tokens on repeated prompts."
+            },
+            "responseCacheTtlMinutes": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 60,
+              "description": "TTL in minutes for cached responses."
+            },
+            "responseCacheMaxEntries": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 5000,
+              "description": "Maximum number of cached responses."
+            },
+            "snapshotEnabled": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable memory snapshots."
+            },
+            "snapshotOnHygiene": {
+              "type": "boolean",
+              "default": false,
+              "description": "Take a snapshot before hygiene runs."
+            },
+            "autoHydrate": {
+              "type": "boolean",
+              "default": true,
+              "description": "Automatically hydrate memory from snapshots on startup."
+            }
+          },
+          "additionalProperties": false
+        },
+        "autonomy": {
+          "type": "object",
+          "description": "Autonomy and security settings.",
+          "properties": {
+            "level": {
+              "type": "string",
+              "enum": [
+                "readonly",
+                "supervised",
+                "full"
+              ],
+              "default": "supervised",
+              "description": "Autonomy level."
+            },
+            "workspaceOnly": {
+              "type": "boolean",
+              "default": true,
+              "description": "Restrict file operations to the workspace directory."
+            },
+            "allowedCommands": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Commands the agent is allowed to execute."
+            },
+            "forbiddenPaths": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Filesystem paths the agent must never access."
+            },
+            "maxActionsPerHour": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 20,
+              "description": "Maximum autonomous actions per hour."
+            },
+            "maxCostPerDayCents": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 500,
+              "description": "Maximum daily cost in cents."
+            },
+            "requireApprovalForMediumRisk": {
+              "type": "boolean",
+              "default": true,
+              "description": "Require human approval for medium-risk actions."
+            },
+            "blockHighRiskCommands": {
+              "type": "boolean",
+              "default": true,
+              "description": "Block high-risk commands entirely."
+            }
+          },
+          "additionalProperties": false
+        },
+        "runtime": {
+          "type": "object",
+          "description": "Runtime execution environment.",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "native",
+                "docker"
+              ],
+              "default": "native",
+              "description": "Execution runtime: 'native' or 'docker'."
+            },
+            "docker": {
+              "type": "object",
+              "description": "Docker runtime settings (only used when kind=docker).",
+              "properties": {
+                "image": {
+                  "type": "string",
+                  "default": "alpine:3.20",
+                  "description": "Docker image for sandboxed execution."
+                },
+                "network": {
+                  "type": "string",
+                  "default": "none",
+                  "description": "Docker network mode."
+                },
+                "memoryLimitMb": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "default": 512,
+                  "description": "Memory limit in MB for the Docker container."
+                },
+                "cpuLimit": {
+                  "type": "number",
+                  "minimum": 0.1,
+                  "default": 1.0,
+                  "description": "CPU limit for the Docker container."
+                },
+                "readOnlyRootfs": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "Mount root filesystem as read-only in Docker."
+                },
+                "mountWorkspace": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "Mount the workspace into the Docker container."
+                },
+                "allowedWorkspaceRoots": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "default": [],
+                  "description": "Allowed workspace root paths."
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "heartbeat": {
+          "type": "object",
+          "description": "Periodic heartbeat configuration (daemon mode).",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable the heartbeat loop."
+            },
+            "intervalMinutes": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 30,
+              "description": "Minutes between heartbeat ticks."
+            }
+          },
+          "additionalProperties": false
+        },
+        "tunnel": {
+          "type": "object",
+          "description": "Tunnel/proxy configuration for exposing the gateway.",
+          "properties": {
+            "provider": {
+              "type": "string",
+              "enum": [
+                "none",
+                "cloudflare",
+                "tailscale",
+                "ngrok",
+                "custom"
+              ],
+              "default": "none",
+              "description": "Tunnel provider."
+            }
+          },
+          "additionalProperties": true
+        },
+        "secretsEncrypt": {
+          "type": "boolean",
+          "default": false,
+          "description": "Encrypt config.toml secrets at rest. Disable in Kubernetes (secrets are managed by K8s Secrets)."
+        },
+        "browser": {
+          "type": "object",
+          "description": "Browser automation settings.",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable browser capabilities."
+            },
+            "allowedDomains": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "default": [],
+              "description": "Domains the browser is allowed to visit."
+            },
+            "backend": {
+              "type": "string",
+              "default": "agent_browser",
+              "description": "Browser backend implementation."
+            },
+            "nativeHeadless": {
+              "type": "boolean",
+              "default": true,
+              "description": "Run native browser in headless mode."
+            },
+            "nativeWebdriverUrl": {
+              "type": "string",
+              "default": "http://127.0.0.1:9515",
+              "description": "WebDriver URL for native browser."
+            }
+          },
+          "additionalProperties": false
+        },
+        "composio": {
+          "type": "object",
+          "description": "Composio integration settings.",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable Composio integration."
+            },
+            "entityId": {
+              "type": "string",
+              "default": "default",
+              "description": "Composio entity ID."
+            }
+          },
+          "additionalProperties": false
+        },
+        "identity": {
+          "type": "object",
+          "description": "Agent identity configuration.",
+          "properties": {
+            "format": {
+              "type": "string",
+              "enum": [
+                "openclaw",
+                "aieos"
+              ],
+              "default": "openclaw",
+              "description": "Identity format: 'openclaw' (markdown files) or 'aieos' (JSON)."
+            },
+            "aieosPath": {
+              "type": "string",
+              "default": "",
+              "description": "Path to AIEOS JSON file (relative to workspace)."
+            },
+            "aieosInline": {
+              "type": "string",
+              "default": "",
+              "description": "Inline AIEOS JSON content."
+            }
+          },
+          "additionalProperties": false
+        },
+        "observability": {
+          "type": "object",
+          "description": "Observability and telemetry settings.",
+          "properties": {
+            "backend": {
+              "type": "string",
+              "enum": [
+                "none",
+                "log",
+                "prometheus",
+                "otel"
+              ],
+              "default": "none",
+              "description": "Observability backend."
+            },
+            "otelEndpoint": {
+              "type": "string",
+              "default": "",
+              "description": "OpenTelemetry collector endpoint."
+            },
+            "otelServiceName": {
+              "type": "string",
+              "default": "",
+              "description": "OpenTelemetry service name."
+            }
+          },
+          "additionalProperties": false
+        },
+        "agent": {
+          "type": "object",
+          "description": "Agent behavior settings.",
+          "properties": {
+            "compactContext": {
+              "type": "boolean",
+              "default": false,
+              "description": "Use compact context to reduce token usage."
+            },
+            "maxToolIterations": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 10,
+              "description": "Maximum tool call iterations per turn."
+            },
+            "maxHistoryMessages": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 50,
+              "description": "Maximum conversation history messages to retain."
+            },
+            "parallelTools": {
+              "type": "boolean",
+              "default": false,
+              "description": "Allow parallel tool execution."
+            },
+            "toolDispatcher": {
+              "type": "string",
+              "default": "auto",
+              "description": "Tool dispatch strategy."
+            }
+          },
+          "additionalProperties": false
+        },
+        "reliability": {
+          "type": "object",
+          "description": "Reliability and retry settings.",
+          "properties": {
+            "providerRetries": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 2,
+              "description": "Number of retries for provider API calls."
+            },
+            "providerBackoffMs": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 500,
+              "description": "Initial backoff in milliseconds between provider retries."
+            },
+            "fallbackProviders": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "default": [],
+              "description": "Fallback LLM providers if the primary fails."
+            },
+            "channelInitialBackoffSecs": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 2,
+              "description": "Initial backoff in seconds for channel reconnection."
+            },
+            "channelMaxBackoffSecs": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 60,
+              "description": "Maximum backoff in seconds for channel reconnection."
+            }
+          },
+          "additionalProperties": false
+        },
+        "skills": {
+          "type": "object",
+          "description": "Skills configuration.",
+          "properties": {
+            "openSkills": {
+              "type": "boolean",
+              "default": false,
+              "description": "Auto-clone community open-skills repo on startup. Requires git in the container."
+            }
+          },
+          "additionalProperties": false
+        },
+        "scheduler": {
+          "type": "object",
+          "description": "Task scheduler settings.",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": true,
+              "description": "Enable the task scheduler."
+            },
+            "maxTasks": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 64,
+              "description": "Maximum number of scheduled tasks."
+            },
+            "maxConcurrent": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 4,
+              "description": "Maximum concurrently running tasks."
+            }
+          },
+          "additionalProperties": false
+        },
+        "cost": {
+          "type": "object",
+          "description": "Cost tracking and limiting.",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable cost tracking."
+            },
+            "dailyLimitUsd": {
+              "type": "number",
+              "minimum": 0,
+              "default": 10.0,
+              "description": "Daily cost limit in USD."
+            },
+            "monthlyLimitUsd": {
+              "type": "number",
+              "minimum": 0,
+              "default": 100.0,
+              "description": "Monthly cost limit in USD."
+            },
+            "warnAtPercent": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100,
+              "default": 80,
+              "description": "Percentage of limit at which to warn."
+            }
+          },
+          "additionalProperties": false
+        },
+        "channels": {
+          "type": "object",
+          "description": "Channel configuration (non-secret settings). Sensitive tokens are injected from channelSecrets.",
+          "properties": {
+            "telegram": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "Enable Telegram channel."
+                },
+                "allowedUsers": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "default": [],
+                  "description": "Allowed Telegram usernames or numeric user IDs."
+                }
+              },
+              "additionalProperties": false
+            },
+            "discord": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "Enable Discord channel."
+                },
+                "guildId": {
+                  "type": "string",
+                  "default": "",
+                  "description": "Discord guild (server) ID."
+                },
+                "allowedUsers": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "default": [],
+                  "description": "Allowed Discord user IDs."
+                },
+                "listenToBots": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "Whether to listen to messages from other bots."
+                }
+              },
+              "additionalProperties": false
+            },
+            "slack": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "Enable Slack channel."
+                },
+                "channelId": {
+                  "type": "string",
+                  "default": "",
+                  "description": "Slack channel ID."
+                },
+                "allowedUsers": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "default": [],
+                  "description": "Allowed Slack user IDs."
+                }
+              },
+              "additionalProperties": false
+            },
+            "whatsapp": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "Enable WhatsApp channel."
+                },
+                "phoneNumberId": {
+                  "type": "string",
+                  "default": "",
+                  "description": "WhatsApp phone number ID."
+                },
+                "allowedNumbers": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "default": [],
+                  "description": "Allowed phone numbers in E.164 format, or ['*'] for all."
+                }
+              },
+              "additionalProperties": false
+            },
+            "matrix": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "Enable Matrix channel."
+                },
+                "homeserver": {
+                  "type": "string",
+                  "default": "",
+                  "description": "Matrix homeserver URL."
+                },
+                "roomId": {
+                  "type": "string",
+                  "default": "",
+                  "description": "Matrix room ID."
+                },
+                "allowedUsers": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "default": [],
+                  "description": "Allowed Matrix user IDs."
+                }
+              },
+              "additionalProperties": false
+            },
+            "imessage": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "Enable iMessage channel."
+                },
+                "allowedContacts": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "default": [],
+                  "description": "Allowed iMessage contacts."
+                }
+              },
+              "additionalProperties": false
+            },
+            "irc": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "Enable IRC channel."
+                },
+                "server": {
+                  "type": "string",
+                  "default": "",
+                  "description": "IRC server hostname."
+                },
+                "port": {
+                  "type": "integer",
+                  "default": 6697,
+                  "description": "IRC server port."
+                },
+                "nickname": {
+                  "type": "string",
+                  "default": "zeroclaw",
+                  "description": "IRC nickname."
+                },
+                "username": {
+                  "type": "string",
+                  "default": "",
+                  "description": "IRC username."
+                },
+                "channels": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "default": [],
+                  "description": "IRC channels to join."
+                },
+                "allowedUsers": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "default": [],
+                  "description": "Allowed IRC users."
+                },
+                "verifyTls": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "Verify TLS certificates for IRC connections."
+                }
+              },
+              "additionalProperties": false
+            },
+            "lark": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "Enable Lark channel."
+                },
+                "appId": {
+                  "type": "string",
+                  "default": "",
+                  "description": "Lark application ID."
+                },
+                "allowedUsers": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "default": [],
+                  "description": "Allowed Lark user IDs."
+                },
+                "useFeishu": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "Use Feishu (China) instead of Lark."
+                },
+                "encryptKey": {
+                  "type": "string",
+                  "default": "",
+                  "description": "Lark event encrypt key."
+                },
+                "verificationToken": {
+                  "type": "string",
+                  "default": "",
+                  "description": "Lark event verification token."
+                }
+              },
+              "additionalProperties": false
+            },
+            "dingtalk": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "Enable DingTalk channel."
+                },
+                "clientId": {
+                  "type": "string",
+                  "default": "",
+                  "description": "DingTalk client ID."
+                },
+                "allowedUsers": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "default": [],
+                  "description": "Allowed DingTalk user IDs."
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "extraConfig": {
+          "type": "string",
+          "default": "",
+          "description": "Raw TOML appended to config.toml for advanced/unsupported options."
+        }
+      },
+      "additionalProperties": false
+    },
+    "secret": {
+      "type": "object",
+      "description": "LLM provider API key Secret configuration.",
+      "properties": {
+        "create": {
+          "type": "boolean",
+          "default": true,
+          "description": "Create a Kubernetes Secret containing the LLM provider API key."
+        },
+        "apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "API key value (only used when create=true)."
+        },
+        "existingSecret": {
+          "type": "string",
+          "default": "",
+          "description": "Reference an existing Secret instead of creating one."
+        },
+        "existingSecretKey": {
+          "type": "string",
+          "default": "API_KEY",
+          "description": "Key name inside the Secret that holds the API key."
+        }
+      },
+      "additionalProperties": false
+    },
+    "channelSecrets": {
+      "type": "object",
+      "description": "Channel and service secrets. Sensitive tokens/passwords injected into config.toml by the init container.",
+      "properties": {
+        "create": {
+          "type": "boolean",
+          "default": false,
+          "description": "Create a managed Kubernetes Secret with channel tokens."
+        },
+        "existingSecret": {
+          "type": "string",
+          "default": "",
+          "description": "Reference an existing Secret. When set, 'create' is ignored."
+        },
+        "secretKeys": {
+          "type": "object",
+          "description": "Key names inside the Secret. Customize when using an existing Secret with different key names.",
+          "properties": {
+            "telegramBotToken": {
+              "type": "string",
+              "default": "TELEGRAM_BOT_TOKEN"
+            },
+            "discordBotToken": {
+              "type": "string",
+              "default": "DISCORD_BOT_TOKEN"
+            },
+            "slackBotToken": {
+              "type": "string",
+              "default": "SLACK_BOT_TOKEN"
+            },
+            "whatsappAccessToken": {
+              "type": "string",
+              "default": "WHATSAPP_ACCESS_TOKEN"
+            },
+            "whatsappVerifyToken": {
+              "type": "string",
+              "default": "WHATSAPP_VERIFY_TOKEN"
+            },
+            "matrixAccessToken": {
+              "type": "string",
+              "default": "MATRIX_ACCESS_TOKEN"
+            },
+            "larkAppSecret": {
+              "type": "string",
+              "default": "LARK_APP_SECRET"
+            },
+            "dingtalkClientSecret": {
+              "type": "string",
+              "default": "DINGTALK_CLIENT_SECRET"
+            },
+            "composioApiKey": {
+              "type": "string",
+              "default": "COMPOSIO_API_KEY"
+            },
+            "ircServerPassword": {
+              "type": "string",
+              "default": "IRC_SERVER_PASSWORD"
+            },
+            "ircNickservPassword": {
+              "type": "string",
+              "default": "IRC_NICKSERV_PASSWORD"
+            },
+            "ircSaslPassword": {
+              "type": "string",
+              "default": "IRC_SASL_PASSWORD"
+            }
+          },
+          "additionalProperties": false
+        },
+        "telegramBotToken": {
+          "type": "string",
+          "default": "",
+          "description": "Telegram bot token (only used when create=true)."
+        },
+        "discordBotToken": {
+          "type": "string",
+          "default": "",
+          "description": "Discord bot token (only used when create=true)."
+        },
+        "slackBotToken": {
+          "type": "string",
+          "default": "",
+          "description": "Slack bot token (only used when create=true)."
+        },
+        "whatsappAccessToken": {
+          "type": "string",
+          "default": "",
+          "description": "WhatsApp access token (only used when create=true)."
+        },
+        "whatsappVerifyToken": {
+          "type": "string",
+          "default": "",
+          "description": "WhatsApp verify token (only used when create=true)."
+        },
+        "matrixAccessToken": {
+          "type": "string",
+          "default": "",
+          "description": "Matrix access token (only used when create=true)."
+        },
+        "larkAppSecret": {
+          "type": "string",
+          "default": "",
+          "description": "Lark app secret (only used when create=true)."
+        },
+        "dingtalkClientSecret": {
+          "type": "string",
+          "default": "",
+          "description": "DingTalk client secret (only used when create=true)."
+        },
+        "composioApiKey": {
+          "type": "string",
+          "default": "",
+          "description": "Composio API key (only used when create=true)."
+        },
+        "ircServerPassword": {
+          "type": "string",
+          "default": "",
+          "description": "IRC server password (only used when create=true)."
+        },
+        "ircNickservPassword": {
+          "type": "string",
+          "default": "",
+          "description": "IRC NickServ password (only used when create=true)."
+        },
+        "ircSaslPassword": {
+          "type": "string",
+          "default": "",
+          "description": "IRC SASL password (only used when create=true)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "persistence": {
+      "type": "object",
+      "description": "Persistent volume configuration for ZeroClaw data.",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable persistent storage."
+        },
+        "existingClaim": {
+          "type": "string",
+          "default": "",
+          "description": "Use an existing PersistentVolumeClaim."
+        },
+        "accessModes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "ReadWriteOnce",
+              "ReadOnlyMany",
+              "ReadWriteMany"
+            ]
+          },
+          "default": [
+            "ReadWriteOnce"
+          ],
+          "description": "PVC access modes."
+        },
+        "size": {
+          "type": "string",
+          "default": "10Gi",
+          "description": "PVC storage size."
+        },
+        "storageClass": {
+          "type": "string",
+          "default": "",
+          "description": "Storage class name. Empty uses the cluster default."
+        },
+        "annotations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "Annotations for the PVC."
+        }
+      },
+      "additionalProperties": false
+    },
+    "probes": {
+      "type": "object",
+      "description": "Health probe configuration.",
+      "properties": {
+        "liveness": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": true,
+              "description": "Enable liveness probe."
+            },
+            "path": {
+              "type": "string",
+              "default": "/health",
+              "description": "HTTP path for liveness checks."
+            },
+            "initialDelaySeconds": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 20,
+              "description": "Seconds before the first probe."
+            },
+            "periodSeconds": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 20,
+              "description": "Seconds between probes."
+            },
+            "timeoutSeconds": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 5,
+              "description": "Seconds before the probe times out."
+            },
+            "failureThreshold": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 3,
+              "description": "Consecutive failures before marking unhealthy."
+            }
+          },
+          "additionalProperties": false
+        },
+        "readiness": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": true,
+              "description": "Enable readiness probe."
+            },
+            "path": {
+              "type": "string",
+              "default": "/health",
+              "description": "HTTP path for readiness checks."
+            },
+            "initialDelaySeconds": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 10,
+              "description": "Seconds before the first probe."
+            },
+            "periodSeconds": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 10,
+              "description": "Seconds between probes."
+            },
+            "timeoutSeconds": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 5,
+              "description": "Seconds before the probe times out."
+            },
+            "failureThreshold": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 3,
+              "description": "Consecutive failures before marking not ready."
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "extraEnv": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          },
+          "valueFrom": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "default": [],
+      "description": "Extra environment variables for the container."
+    },
+    "extraEnvFrom": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "default": [],
+      "description": "Extra envFrom sources (ConfigMapRef, SecretRef)."
+    },
+    "extraManifests": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "default": [],
+      "description": "Arbitrary extra Kubernetes manifests to deploy alongside the chart."
+    }
+  },
+  "additionalProperties": false
+}
