@@ -76,30 +76,317 @@ nodeSelector: {}
 tolerations: []
 affinity: {}
 
+# ---------------------------------------------------------------------------
+# ZeroClaw application configuration
+# Maps to ~/.zeroclaw/config.toml inside the container
+# Reference: https://github.com/zeroclaw-labs/zeroclaw
+# ---------------------------------------------------------------------------
 config:
   # Runtime mode: "gateway" (HTTP webhook server only) or "daemon" (full autonomous runtime)
   # gateway: bare webhook API — you call /webhook with a bearer token
   # daemon: starts gateway + channels (Telegram, Discord, …) + heartbeat + memory
   mode: gateway
 
-  # Options: openrouter, openai, anthropic, ollama
+  # LLM provider: openrouter, openai, anthropic, ollama, groq, mistral, xai, deepseek, together, fireworks, perplexity, cohere, bedrock, venice, custom
   provider: openrouter
+
+  # Default model (leave empty for provider default)
+  # Examples: anthropic/claude-sonnet-4-20250514, openai/gpt-4o, google/gemini-2.0-flash
+  model: ""
+
+  # LLM temperature (0.0 – 1.0)
+  temperature: 0.7
+
+  # ── Gateway settings ────────────────────────────────────────
+  # Allow binding to non-localhost (required for Kubernetes pod networking)
   allowPublicBind: true
 
   # Require 6-digit pairing code exchange for bearer token (gateway security).
   # Disable when running behind a ClusterIP / ingress where network-level auth suffices.
   requirePairing: false
 
-  # Optional: Model override
-  # Example: claude-sonnet-4-5-20250929
-  model: ""
+  # Rate limits
+  gateway:
+    pairRateLimitPerMinute: 10
+    webhookRateLimitPerMinute: 60
+    idempotencyTtlSecs: 300
 
+  # ── Memory ──────────────────────────────────────────────────
+  memory:
+    # Backend: "sqlite" | "lucid" | "markdown" | "none"
+    backend: sqlite
+    autoSave: true
+    # Embedding provider: "none" | "openai" | "custom:URL"
+    embeddingProvider: none
+    embeddingModel: text-embedding-3-small
+    embeddingDimensions: 1536
+    vectorWeight: 0.7
+    keywordWeight: 0.3
+    embeddingCacheSize: 10000
+    chunkMaxTokens: 512
+    # Memory hygiene
+    hygieneEnabled: true
+    archiveAfterDays: 7
+    purgeAfterDays: 30
+    conversationRetentionDays: 30
+    # Response cache (saves tokens on repeated prompts)
+    responseCacheEnabled: false
+    responseCacheTtlMinutes: 60
+    responseCacheMaxEntries: 5000
+    # Memory snapshots
+    snapshotEnabled: false
+    snapshotOnHygiene: false
+    autoHydrate: true
+
+  # ── Autonomy / Security ────────────────────────────────────
+  autonomy:
+    # Level: "readonly" | "supervised" | "full"
+    level: supervised
+    workspaceOnly: true
+    allowedCommands:
+      - git
+      - npm
+      - cargo
+      - ls
+      - cat
+      - grep
+      - find
+      - echo
+      - pwd
+      - wc
+      - head
+      - tail
+    forbiddenPaths:
+      - /etc
+      - /root
+      - /proc
+      - /sys
+      - ~/.ssh
+      - ~/.gnupg
+      - ~/.aws
+    maxActionsPerHour: 20
+    maxCostPerDayCents: 500
+    requireApprovalForMediumRisk: true
+    blockHighRiskCommands: true
+
+  # ── Runtime ─────────────────────────────────────────────────
+  runtime:
+    # "native" or "docker"
+    kind: native
+    docker:
+      image: alpine:3.20
+      network: none
+      memoryLimitMb: 512
+      cpuLimit: 1.0
+      readOnlyRootfs: true
+      mountWorkspace: true
+      allowedWorkspaceRoots: []
+
+  # ── Heartbeat ───────────────────────────────────────────────
+  heartbeat:
+    enabled: false
+    intervalMinutes: 30
+
+  # ── Tunnel ──────────────────────────────────────────────────
+  tunnel:
+    # "none" | "cloudflare" | "tailscale" | "ngrok" | "custom"
+    provider: none
+
+  # ── Secrets (config.toml encryption at rest) ────────────────
+  # Disable in Kubernetes — secrets are managed by K8s Secrets.
+  secretsEncrypt: false
+
+  # ── Browser ─────────────────────────────────────────────────
+  browser:
+    enabled: false
+    allowedDomains: []
+    backend: agent_browser
+    nativeHeadless: true
+    nativeWebdriverUrl: "http://127.0.0.1:9515"
+
+  # ── Composio ────────────────────────────────────────────────
+  composio:
+    enabled: false
+    entityId: default
+
+  # ── Identity ────────────────────────────────────────────────
+  identity:
+    # "openclaw" (default, markdown files) or "aieos" (JSON)
+    format: openclaw
+    # Path to AIEOS JSON file (relative to workspace)
+    aieosPath: ""
+    # Inline AIEOS JSON
+    aieosInline: ""
+
+  # ── Observability ───────────────────────────────────────────
+  observability:
+    # "none" | "log" | "prometheus" | "otel"
+    backend: none
+    otelEndpoint: ""
+    otelServiceName: ""
+
+  # ── Agent ───────────────────────────────────────────────────
+  agent:
+    compactContext: false
+    maxToolIterations: 10
+    maxHistoryMessages: 50
+    parallelTools: false
+    toolDispatcher: auto
+
+  # ── Reliability ─────────────────────────────────────────────
+  reliability:
+    providerRetries: 2
+    providerBackoffMs: 500
+    fallbackProviders: []
+    channelInitialBackoffSecs: 2
+    channelMaxBackoffSecs: 60
+
+  # ── Skills ─────────────────────────────────────────────────
+  skills:
+    # Auto-clone community open-skills repo on startup (requires git in the container).
+    # Disabled by default because the container image does not ship git.
+    openSkills: false
+
+  # ── Scheduler ───────────────────────────────────────────────
+  scheduler:
+    enabled: true
+    maxTasks: 64
+    maxConcurrent: 4
+
+  # ── Cost tracking ───────────────────────────────────────────
+  cost:
+    enabled: false
+    dailyLimitUsd: 10.0
+    monthlyLimitUsd: 100.0
+    warnAtPercent: 80
+
+  # ── Channels (non-secret configuration) ─────────────────────
+  # Sensitive values (tokens, passwords) are injected from channelSecrets.
+  # Only enable channels when running in "daemon" mode.
+  channels:
+    telegram:
+      enabled: false
+      # Telegram usernames or numeric user IDs
+      allowedUsers: []
+
+    discord:
+      enabled: false
+      guildId: ""
+      allowedUsers: []
+      listenToBots: false
+
+    slack:
+      enabled: false
+      channelId: ""
+      allowedUsers: []
+
+    whatsapp:
+      enabled: false
+      phoneNumberId: ""
+      # E.164 format: ["+1234567890"] or ["*"] for all
+      allowedNumbers: []
+
+    matrix:
+      enabled: false
+      homeserver: ""
+      roomId: ""
+      allowedUsers: []
+
+    imessage:
+      enabled: false
+      allowedContacts: []
+
+    irc:
+      enabled: false
+      server: ""
+      port: 6697
+      nickname: zeroclaw
+      username: ""
+      channels: []
+      allowedUsers: []
+      verifyTls: true
+
+    lark:
+      enabled: false
+      appId: ""
+      allowedUsers: []
+      useFeishu: false
+      encryptKey: ""
+      verificationToken: ""
+
+    dingtalk:
+      enabled: false
+      clientId: ""
+      allowedUsers: []
+
+  # ── Raw TOML appended to config.toml ────────────────────────
+  # Use for advanced/unsupported options not covered above.
+  # Example:
+  #   extraConfig: |
+  #     [channels_config.email]
+  #     smtp_host = "smtp.gmail.com"
+  #     smtp_port = 587
+  extraConfig: ""
+
+# ---------------------------------------------------------------------------
+# API Key Secret
+# ---------------------------------------------------------------------------
 secret:
+  # Create a Kubernetes Secret containing the LLM provider API key.
   create: true
+  # API key value (only used when create=true)
   apiKey: ""
+  # Reference an existing Secret instead of creating one.
   existingSecret: ""
+  # Key name inside the Secret that holds the API key.
   existingSecretKey: API_KEY
 
+# ---------------------------------------------------------------------------
+# Channel & Service Secrets
+# Sensitive tokens/passwords for channels and integrations.
+# These are injected into config.toml by the init container at startup.
+# ---------------------------------------------------------------------------
+channelSecrets:
+  # Create a managed Kubernetes Secret with values below, or reference an existing one.
+  create: false
+  # Reference an existing Secret that contains channel tokens.
+  # When set, 'create' is ignored and the existing Secret is used.
+  existingSecret: ""
+
+  # Key names inside the Secret. Customize when using an existing Secret
+  # with different key names. Only keys for enabled channels need to exist.
+  secretKeys:
+    telegramBotToken: TELEGRAM_BOT_TOKEN
+    discordBotToken: DISCORD_BOT_TOKEN
+    slackBotToken: SLACK_BOT_TOKEN
+    whatsappAccessToken: WHATSAPP_ACCESS_TOKEN
+    whatsappVerifyToken: WHATSAPP_VERIFY_TOKEN
+    matrixAccessToken: MATRIX_ACCESS_TOKEN
+    larkAppSecret: LARK_APP_SECRET
+    dingtalkClientSecret: DINGTALK_CLIENT_SECRET
+    composioApiKey: COMPOSIO_API_KEY
+    ircServerPassword: IRC_SERVER_PASSWORD
+    ircNickservPassword: IRC_NICKSERV_PASSWORD
+    ircSaslPassword: IRC_SASL_PASSWORD
+
+  # Values for the managed secret (only used when create=true).
+  # Leave empty for channels you don't use.
+  telegramBotToken: ""
+  discordBotToken: ""
+  slackBotToken: ""
+  whatsappAccessToken: ""
+  whatsappVerifyToken: ""
+  matrixAccessToken: ""
+  larkAppSecret: ""
+  dingtalkClientSecret: ""
+  composioApiKey: ""
+  ircServerPassword: ""
+  ircNickservPassword: ""
+  ircSaslPassword: ""
+
+# ---------------------------------------------------------------------------
+# Persistence
+# ---------------------------------------------------------------------------
 persistence:
   enabled: true
   existingClaim: ""
@@ -109,6 +396,9 @@ persistence:
   storageClass: ""
   annotations: {}
 
+# ---------------------------------------------------------------------------
+# Health probes
+# ---------------------------------------------------------------------------
 probes:
   liveness:
     enabled: true
@@ -125,5 +415,8 @@ probes:
     timeoutSeconds: 5
     failureThreshold: 3
 
+# ---------------------------------------------------------------------------
+# Extra environment variables
+# ---------------------------------------------------------------------------
 extraEnv: []
 extraEnvFrom: []

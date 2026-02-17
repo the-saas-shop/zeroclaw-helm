@@ -11,10 +11,14 @@ spec:
       {{- include "zeroclaw.selectorLabels" . | nindent 6 }}
   template:
     metadata:
-      {{- with .Values.podAnnotations }}
       annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        {{- if include "zeroclaw.hasChannelSecrets" . }}
+        checksum/channel-secrets: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+        {{- end }}
+        {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
-      {{- end }}
+        {{- end }}
       labels:
         {{- include "zeroclaw.selectorLabels" . | nindent 8 }}
         {{- with .Values.podLabels }}
@@ -34,8 +38,70 @@ spec:
           command: ["sh", "-c"]
           args:
             - |
+              set -e
               mkdir -p /zeroclaw-data/.zeroclaw /zeroclaw-data/workspace
               cp /config/config.toml /zeroclaw-data/.zeroclaw/config.toml
+              {{- if include "zeroclaw.hasChannelSecrets" . }}
+              CONFIG="/zeroclaw-data/.zeroclaw/config.toml"
+
+              # inject_secret: Replace a __SECRET_*__ placeholder in config.toml
+              # with the actual value from the mounted secret volume.
+              # Uses awk with index()/substr() to avoid special-character issues
+              # that affect sed and gsub-based approaches.
+              inject_secret() {
+                placeholder="$1"
+                secret_file="$2"
+                if [ -f "$secret_file" ]; then
+                  awk -v p="$placeholder" -v sf="$secret_file" '
+                    BEGIN { while ((getline line < sf) > 0) { v = v line } close(sf) }
+                    {
+                      out = ""
+                      rest = $0
+                      while ((idx = index(rest, p)) > 0) {
+                        out = out substr(rest, 1, idx - 1) v
+                        rest = substr(rest, idx + length(p))
+                      }
+                      print out rest
+                    }
+                  ' "$CONFIG" > "${CONFIG}.tmp" && mv "${CONFIG}.tmp" "$CONFIG"
+                else
+                  # Secret file not present — remove the placeholder line entirely
+                  # so ZeroClaw doesn't see a literal "__SECRET_*__" value.
+                  awk -v p="$placeholder" 'index($0, p) == 0' "$CONFIG" > "${CONFIG}.tmp" && mv "${CONFIG}.tmp" "$CONFIG"
+                fi
+              }
+
+              {{- if .Values.config.channels.telegram.enabled }}
+              inject_secret "__SECRET_TELEGRAM_BOT_TOKEN__" "/secrets/channel/{{ .Values.channelSecrets.secretKeys.telegramBotToken }}"
+              {{- end }}
+              {{- if .Values.config.channels.discord.enabled }}
+              inject_secret "__SECRET_DISCORD_BOT_TOKEN__" "/secrets/channel/{{ .Values.channelSecrets.secretKeys.discordBotToken }}"
+              {{- end }}
+              {{- if .Values.config.channels.slack.enabled }}
+              inject_secret "__SECRET_SLACK_BOT_TOKEN__" "/secrets/channel/{{ .Values.channelSecrets.secretKeys.slackBotToken }}"
+              {{- end }}
+              {{- if .Values.config.channels.whatsapp.enabled }}
+              inject_secret "__SECRET_WHATSAPP_ACCESS_TOKEN__" "/secrets/channel/{{ .Values.channelSecrets.secretKeys.whatsappAccessToken }}"
+              inject_secret "__SECRET_WHATSAPP_VERIFY_TOKEN__" "/secrets/channel/{{ .Values.channelSecrets.secretKeys.whatsappVerifyToken }}"
+              {{- end }}
+              {{- if .Values.config.channels.matrix.enabled }}
+              inject_secret "__SECRET_MATRIX_ACCESS_TOKEN__" "/secrets/channel/{{ .Values.channelSecrets.secretKeys.matrixAccessToken }}"
+              {{- end }}
+              {{- if .Values.config.channels.irc.enabled }}
+              inject_secret "__SECRET_IRC_SERVER_PASSWORD__" "/secrets/channel/{{ .Values.channelSecrets.secretKeys.ircServerPassword }}"
+              inject_secret "__SECRET_IRC_NICKSERV_PASSWORD__" "/secrets/channel/{{ .Values.channelSecrets.secretKeys.ircNickservPassword }}"
+              inject_secret "__SECRET_IRC_SASL_PASSWORD__" "/secrets/channel/{{ .Values.channelSecrets.secretKeys.ircSaslPassword }}"
+              {{- end }}
+              {{- if .Values.config.channels.lark.enabled }}
+              inject_secret "__SECRET_LARK_APP_SECRET__" "/secrets/channel/{{ .Values.channelSecrets.secretKeys.larkAppSecret }}"
+              {{- end }}
+              {{- if .Values.config.channels.dingtalk.enabled }}
+              inject_secret "__SECRET_DINGTALK_CLIENT_SECRET__" "/secrets/channel/{{ .Values.channelSecrets.secretKeys.dingtalkClientSecret }}"
+              {{- end }}
+              {{- if .Values.config.composio.enabled }}
+              inject_secret "__SECRET_COMPOSIO_API_KEY__" "/secrets/channel/{{ .Values.channelSecrets.secretKeys.composioApiKey }}"
+              {{- end }}
+              {{- end }}
               chown -R 65534:65534 /zeroclaw-data/.zeroclaw
           volumeMounts:
             - name: data
@@ -43,6 +109,11 @@ spec:
             - name: config
               mountPath: /config
               readOnly: true
+            {{- if include "zeroclaw.hasChannelSecrets" . }}
+            - name: channel-secrets
+              mountPath: /secrets/channel
+              readOnly: true
+            {{- end }}
       containers:
         - name: zeroclaw
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -76,6 +147,8 @@ spec:
             - name: ZEROCLAW_MODEL
               value: {{ .Values.config.model | quote }}
             {{- end }}
+            - name: ZEROCLAW_OPEN_SKILLS_ENABLED
+              value: {{ ternary "true" "false" .Values.config.skills.openSkills | quote }}
             - name: API_KEY
               valueFrom:
                 secretKeyRef:
@@ -148,6 +221,11 @@ spec:
         - name: config
           configMap:
             name: {{ include "zeroclaw.fullname" . }}-config
+        {{- if include "zeroclaw.hasChannelSecrets" . }}
+        - name: channel-secrets
+          secret:
+            secretName: {{ include "zeroclaw.channelSecretsName" . }}
+        {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

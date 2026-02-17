@@ -5,3 +5,43 @@
 {{- if not (or (eq .Values.config.mode "gateway") (eq .Values.config.mode "daemon")) -}}
 {{- fail "config.mode must be either \"gateway\" or \"daemon\"" -}}
 {{- end -}}
+
+{{/* Channels require daemon mode */}}
+{{- $anyChannel := or .Values.config.channels.telegram.enabled .Values.config.channels.discord.enabled .Values.config.channels.slack.enabled .Values.config.channels.whatsapp.enabled .Values.config.channels.matrix.enabled .Values.config.channels.imessage.enabled .Values.config.channels.irc.enabled .Values.config.channels.lark.enabled .Values.config.channels.dingtalk.enabled -}}
+{{- if and $anyChannel (ne .Values.config.mode "daemon") -}}
+{{- fail "config.mode must be \"daemon\" when any channel is enabled (channels require the full runtime)" -}}
+{{- end -}}
+
+{{/* Channels with secrets require channelSecrets to be configured */}}
+{{- $needsChannelSecret := or .Values.config.channels.telegram.enabled .Values.config.channels.discord.enabled .Values.config.channels.slack.enabled .Values.config.channels.whatsapp.enabled .Values.config.channels.matrix.enabled .Values.config.channels.irc.enabled .Values.config.channels.lark.enabled .Values.config.channels.dingtalk.enabled -}}
+{{- if and $needsChannelSecret (not (include "zeroclaw.hasChannelSecrets" .)) -}}
+{{- fail "channelSecrets.create or channelSecrets.existingSecret must be set when token-based channels are enabled" -}}
+{{- end -}}
+
+{{/* WhatsApp requires phoneNumberId */}}
+{{- if and .Values.config.channels.whatsapp.enabled (not .Values.config.channels.whatsapp.phoneNumberId) -}}
+{{- fail "config.channels.whatsapp.phoneNumberId is required when WhatsApp is enabled" -}}
+{{- end -}}
+
+{{/* Matrix requires homeserver and roomId */}}
+{{- if and .Values.config.channels.matrix.enabled (not .Values.config.channels.matrix.homeserver) -}}
+{{- fail "config.channels.matrix.homeserver is required when Matrix is enabled" -}}
+{{- end -}}
+{{- if and .Values.config.channels.matrix.enabled (not .Values.config.channels.matrix.roomId) -}}
+{{- fail "config.channels.matrix.roomId is required when Matrix is enabled" -}}
+{{- end -}}
+
+{{/* IRC requires server */}}
+{{- if and .Values.config.channels.irc.enabled (not .Values.config.channels.irc.server) -}}
+{{- fail "config.channels.irc.server is required when IRC is enabled" -}}
+{{- end -}}
+
+{{/* Lark requires appId */}}
+{{- if and .Values.config.channels.lark.enabled (not .Values.config.channels.lark.appId) -}}
+{{- fail "config.channels.lark.appId is required when Lark is enabled" -}}
+{{- end -}}
+
+{{/* DingTalk requires clientId */}}
+{{- if and .Values.config.channels.dingtalk.enabled (not .Values.config.channels.dingtalk.clientId) -}}
+{{- fail "config.channels.dingtalk.clientId is required when DingTalk is enabled" -}}
+{{- end -}}

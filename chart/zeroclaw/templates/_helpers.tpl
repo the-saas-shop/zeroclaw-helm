@@ -82,3 +82,34 @@ Resolve persistence claim name.
 {{- printf "%s-data" (include "zeroclaw.fullname" .) -}}
 {{- end -}}
 {{- end -}}
+
+{{/*
+Resolve channel secrets secret name.
+Returns empty string if no channel secrets are configured.
+*/}}
+{{- define "zeroclaw.channelSecretsName" -}}
+{{- if .Values.channelSecrets.existingSecret -}}
+{{- .Values.channelSecrets.existingSecret -}}
+{{- else if .Values.channelSecrets.create -}}
+{{- printf "%s-channel-secrets" (include "zeroclaw.fullname" .) -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Check if channel secrets volume should be mounted.
+Returns "true" if either create or existingSecret is set.
+*/}}
+{{- define "zeroclaw.hasChannelSecrets" -}}
+{{- if or .Values.channelSecrets.create .Values.channelSecrets.existingSecret -}}
+true
+{{- end -}}
+{{- end -}}
+
+{{/*
+Helper to render a TOML string list from a Helm list value.
+Usage: {{ include "zeroclaw.tomlStringList" .Values.config.autonomy.allowedCommands }}
+Output: ["git", "npm", "cargo"]
+*/}}
+{{- define "zeroclaw.tomlStringList" -}}
+[{{ range $i, $v := . }}{{ if $i }}, {{ end }}{{ $v | quote }}{{ end }}]
+{{- end -}}
