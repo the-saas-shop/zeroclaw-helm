@@ -2,6 +2,7 @@
 
 [![Lint and Test Charts](https://github.com/niklasfrick/zeroclaw-helm/actions/workflows/ci.yaml/badge.svg)](https://github.com/niklasfrick/zeroclaw-helm/actions/workflows/ci.yaml)
 [![Release Charts](https://github.com/niklasfrick/zeroclaw-helm/actions/workflows/release.yaml/badge.svg)](https://github.com/niklasfrick/zeroclaw-helm/actions/workflows/release.yaml)
+[![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/zeroclaw)](https://artifacthub.io/packages/search?repo=zeroclaw)
 
 Helm chart for deploying [ZeroClaw](https://github.com/zeroclaw-labs/zeroclaw) on Kubernetes.
 
@@ -40,13 +41,13 @@ helm install zeroclaw ./chart/zeroclaw --set secret.apiKey="sk-..."
 
 All configuration is done through Helm values. Key settings:
 
-| Value               | Default      | Description                              |
-| ------------------- | ------------ | ---------------------------------------- |
-| `config.mode`       | `gateway`    | `gateway` (webhook only) or `daemon`     |
-| `config.provider`   | `openrouter` | LLM provider                             |
-| `config.model`      | `""`         | Model override (default: `claude-sonnet-4-5-20250929`) |
-| `secret.apiKey`     | `""`         | API key (creates a Kubernetes Secret)    |
-| `persistence.size`  | `10Gi`       | PVC size for `/zeroclaw-data`            |
+| Value              | Default      | Description                                            |
+| ------------------ | ------------ | ------------------------------------------------------ |
+| `config.mode`      | `gateway`    | `gateway` (webhook only) or `daemon`                   |
+| `config.provider`  | `openrouter` | LLM provider                                           |
+| `config.model`     | `""`         | Model override (default: `claude-sonnet-4-5-20250929`) |
+| `secret.apiKey`    | `""`         | API key (creates a Kubernetes Secret)                  |
+| `persistence.size` | `10Gi`       | PVC size for `/zeroclaw-data`                          |
 
 See the full values reference and examples in [`chart/zeroclaw/README.md`](chart/zeroclaw/README.md).
 
@@ -80,10 +81,10 @@ This repository uses GitHub Actions for continuous integration and release autom
 
 Commit messages on `main` drive automatic version bumps:
 
-| Commit prefix | Bump  | Example                          |
-| ------------- | ----- | -------------------------------- |
-| `fix:`        | Patch | `fix: correct probe path`        |
-| `feat:`       | Minor | `feat: add ServiceMonitor`       |
+| Commit prefix                | Bump  | Example                         |
+| ---------------------------- | ----- | ------------------------------- |
+| `fix:`                       | Patch | `fix: correct probe path`       |
+| `feat:`                      | Minor | `feat: add ServiceMonitor`      |
 | `feat!:` / `BREAKING CHANGE` | Major | `feat!: rename values root key` |
 
 ## Repository Setup
