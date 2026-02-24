@@ -42,9 +42,7 @@ spec:
               mkdir -p /zeroclaw-data/.zeroclaw /zeroclaw-data/workspace
               cp /config/config.toml /zeroclaw-data/.zeroclaw/config.toml
               # Copy workspace seed files (SOUL.md, IDENTITY.md, AGENTS.md, etc.)
-              for f in /config/*.md; do
-                [ -f "$f" ] && cp "$f" /zeroclaw-data/workspace/
-              done
+              cp /config/*.md /zeroclaw-data/workspace/ 2>/dev/null || true
               {{- if include "zeroclaw.hasChannelSecrets" . }}
               CONFIG="/zeroclaw-data/.zeroclaw/config.toml"
 
@@ -106,7 +104,15 @@ spec:
               inject_secret "__SECRET_COMPOSIO_API_KEY__" "/secrets/channel/{{ .Values.channelSecrets.secretKeys.composioApiKey }}"
               {{- end }}
               {{- end }}
-              chown -R 65534:65534 /zeroclaw-data/.zeroclaw
+              chown -R 65534:65534 /zeroclaw-data/.zeroclaw /zeroclaw-data/workspace
+              echo "=== DEBUG: /config contents ==="
+              ls -la /config/
+              echo "=== DEBUG: /zeroclaw-data/workspace contents ==="
+              ls -la /zeroclaw-data/workspace/
+              echo "=== DEBUG: /zeroclaw-data/.zeroclaw contents ==="
+              ls -la /zeroclaw-data/.zeroclaw/
+              echo "=== DEBUG: config.toml workspace_dir ==="
+              grep workspace_dir /zeroclaw-data/.zeroclaw/config.toml
           volumeMounts:
             - name: data
               mountPath: /zeroclaw-data

@@ -264,7 +264,7 @@ data:
     # ── Extra configuration ───────────────────────────────────
 {{ .Values.config.extraConfig | indent 4 }}
     {{- end }}
-{{- range $name, $content := .Values.config.workspaceFiles }}
+  {{- range $name, $content := .Values.config.workspaceFiles }}
   {{ $name }}: |
 {{ $content | indent 4 }}
-{{- end }}
+  {{- end }}
