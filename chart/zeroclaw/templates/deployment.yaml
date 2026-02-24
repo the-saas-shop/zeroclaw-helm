@@ -147,6 +147,8 @@ spec:
               protocol: TCP
           {{- end }}
           env:
+            - name: ZEROCLAW_WORKSPACE
+              value: "/zeroclaw-data"
             - name: PROVIDER
               value: {{ .Values.config.provider | quote }}
             - name: ZEROCLAW_GATEWAY_PORT
