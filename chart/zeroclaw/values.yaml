@@ -319,6 +319,24 @@ config:
       clientId: ""
       allowedUsers: []
 
+  # ── Workspace seed files ────────────────────────────────────
+  # Pre-seed workspace with identity / operational files on every pod start.
+  # Keys are file names, values are the file content.
+  # Files are written to /zeroclaw-data/workspace/<key>.
+  # Example:
+  #   workspaceFiles:
+  #     SOUL.md: |
+  #       # SOUL.md - Who You Are
+  #       ...
+  #     IDENTITY.md: |
+  #       # IDENTITY.md
+  #       **Name:** My Agent
+  #       ...
+  #     AGENTS.md: |
+  #       # AGENTS.md - Operating Instructions
+  #       ...
+  workspaceFiles: {}
+
   # ── Raw TOML appended to config.toml ────────────────────────
   # Use for advanced/unsupported options not covered above.
   # Example:
