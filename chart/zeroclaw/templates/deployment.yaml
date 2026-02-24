@@ -140,7 +140,7 @@ spec:
           {{- end }}
           env:
             - name: ZEROCLAW_WORKSPACE
-              value: "/zeroclaw-data"
+              value: "/zeroclaw-data/.zeroclaw"
             - name: PROVIDER
               value: {{ .Values.config.provider | quote }}
             - name: ZEROCLAW_GATEWAY_PORT
