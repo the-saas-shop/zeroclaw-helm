@@ -167,7 +167,7 @@ spec:
           {{- end }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
-          {{- if .Values.probes.liveness.enabled }}
+          {{- if and .Values.probes.liveness.enabled (eq .Values.config.mode "gateway") }}
           livenessProbe:
             httpGet:
               path: {{ .Values.probes.liveness.path }}
@@ -177,7 +177,7 @@ spec:
             timeoutSeconds: {{ .Values.probes.liveness.timeoutSeconds }}
             failureThreshold: {{ .Values.probes.liveness.failureThreshold }}
           {{- end }}
-          {{- if .Values.probes.readiness.enabled }}
+          {{- if and .Values.probes.readiness.enabled (eq .Values.config.mode "gateway") }}
           readinessProbe:
             httpGet:
               path: {{ .Values.probes.readiness.path }}
@@ -198,12 +198,30 @@ spec:
         - name: gateway-proxy
           image: alpine/socat:1.8.0.3
           args:
-            - TCP-LISTEN:{{ .Values.service.targetPort }},fork,reuseaddr
-            - TCP:127.0.0.1:8080
+            - TCP-LISTEN:{{ .Values.service.proxyPort }},fork,reuseaddr
+            - TCP:127.0.0.1:{{ .Values.service.targetPort }}
           ports:
             - name: http
-              containerPort: {{ .Values.service.targetPort }}
+              containerPort: {{ .Values.service.proxyPort }}
               protocol: TCP
+          {{- if .Values.probes.liveness.enabled }}
+          livenessProbe:
+            tcpSocket:
+              port: {{ .Values.service.proxyPort }}
+            initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.liveness.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.liveness.failureThreshold }}
+          {{- end }}
+          {{- if .Values.probes.readiness.enabled }}
+          readinessProbe:
+            tcpSocket:
+              port: {{ .Values.service.proxyPort }}
+            initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.readiness.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.readiness.failureThreshold }}
+          {{- end }}
           securityContext:
             runAsNonRoot: true
             runAsUser: 65534

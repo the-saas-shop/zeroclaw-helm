@@ -194,6 +194,11 @@
           "default": 3000,
           "description": "Container port the Service forwards to."
         },
+        "proxyPort": {
+          "type": "integer",
+          "default": 8080,
+          "description": "Port the gateway-proxy sidecar listens on in daemon mode."
+        },
         "annotations": {
           "type": "object",
           "additionalProperties": {

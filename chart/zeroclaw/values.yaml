@@ -35,6 +35,8 @@ service:
   type: ClusterIP
   port: 3000
   targetPort: 3000
+  # Port the gateway-proxy sidecar listens on in daemon mode
+  proxyPort: 8080
   annotations: {}
 
 ingress:
