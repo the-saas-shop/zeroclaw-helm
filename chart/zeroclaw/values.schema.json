@@ -420,26 +420,34 @@
           "description": "Runtime mode. 'gateway' = HTTP webhook server only. 'daemon' = full autonomous runtime with channels, heartbeat, and memory."
         },
         "provider": {
-          "type": "string",
-          "enum": [
-            "openrouter",
-            "openai",
-            "anthropic",
-            "ollama",
-            "groq",
-            "mistral",
-            "xai",
-            "deepseek",
-            "together",
-            "fireworks",
-            "perplexity",
-            "cohere",
-            "bedrock",
-            "venice",
-            "custom"
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "openrouter",
+                "openai",
+                "anthropic",
+                "ollama",
+                "groq",
+                "mistral",
+                "xai",
+                "deepseek",
+                "together",
+                "fireworks",
+                "perplexity",
+                "cohere",
+                "bedrock",
+                "venice",
+                "custom"
+              ]
+            },
+            {
+              "type": "string",
+              "pattern": "^(custom|anthropic-custom):.+"
+            }
           ],
           "default": "openrouter",
-          "description": "LLM provider to use."
+          "description": "LLM provider. Use 'custom:https://url' for OpenAI-compatible or 'anthropic-custom:https://url' for Anthropic-compatible endpoints."
         },
         "model": {
           "type": "string",
