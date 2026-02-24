@@ -328,6 +328,19 @@ config:
   #     smtp_port = 587
   extraConfig: ""
 
+  # ── Workspace seed files ───────────────────────────────────
+  # Pre-seed workspace with markdown files (e.g. SOUL.md, IDENTITY.md).
+  # Keys are file names, values are file content.
+  # Example:
+  #   workspaceFiles:
+  #     SOUL.md: |
+  #       # SOUL.md
+  #       You are a research assistant.
+  #     IDENTITY.md: |
+  #       # IDENTITY.md
+  #       **Name:** Atlas
+  workspaceFiles: {}
+
 # ---------------------------------------------------------------------------
 # API Key Secret
 # ---------------------------------------------------------------------------

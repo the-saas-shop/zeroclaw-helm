@@ -1295,6 +1295,12 @@
           "type": "string",
           "default": "",
           "description": "Raw TOML appended to config.toml for advanced/unsupported options."
+        },
+        "workspaceFiles": {
+          "type": "object",
+          "description": "Workspace seed files (e.g. SOUL.md, IDENTITY.md). Keys are file names, values are content strings.",
+          "default": {},
+          "additionalProperties": { "type": "string" }
         }
       },
       "additionalProperties": false
