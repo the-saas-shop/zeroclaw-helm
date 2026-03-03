@@ -43,6 +43,11 @@ spec:
               cp /config/config.toml /zeroclaw-data/.zeroclaw/config.toml
               # Copy workspace seed files (SOUL.md, IDENTITY.md, AGENTS.md, etc.)
               cp /config/*.md /zeroclaw-data/.zeroclaw/workspace/ 2>/dev/null || true
+              # Copy skill files into workspace/skills/<name>/SKILL.md
+              {{- range .Values.skillFiles }}
+              mkdir -p /zeroclaw-data/.zeroclaw/workspace/skills/{{ .name }}
+              cp /skills/{{ .name }}/{{ .key }} /zeroclaw-data/.zeroclaw/workspace/skills/{{ .name }}/{{ .key }}
+              {{- end }}
               {{- if include "zeroclaw.hasChannelSecrets" . }}
               CONFIG="/zeroclaw-data/.zeroclaw/config.toml"
 
@@ -114,6 +119,11 @@ spec:
             {{- if include "zeroclaw.hasChannelSecrets" . }}
             - name: channel-secrets
               mountPath: /secrets/channel
+              readOnly: true
+            {{- end }}
+            {{- range .Values.skillFiles }}
+            - name: skill-{{ .name }}
+              mountPath: /skills/{{ .name }}
               readOnly: true
             {{- end }}
       containers:
@@ -247,6 +257,11 @@ spec:
         - name: channel-secrets
           secret:
             secretName: {{ include "zeroclaw.channelSecretsName" . }}
+        {{- end }}
+        {{- range .Values.skillFiles }}
+        - name: skill-{{ .name }}
+          configMap:
+            name: {{ .configMapName }}
         {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:

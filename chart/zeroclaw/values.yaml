@@ -459,3 +459,15 @@ extraEnvFrom: []
 #       policyTypes:
 #         - Ingress
 extraManifests: []
+
+# ---------------------------------------------------------------------------
+# Skill files
+# Mount skill content from ConfigMaps into workspace/skills/<name>/SKILL.md.
+# Each entry references a ConfigMap containing the SKILL.md content.
+# Example:
+#   skillFiles:
+#     - name: brave-search
+#       configMapName: zeroclaw-skill-brave-search
+#       key: SKILL.md
+# ---------------------------------------------------------------------------
+skillFiles: []

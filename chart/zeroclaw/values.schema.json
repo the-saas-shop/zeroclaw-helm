@@ -1643,6 +1643,30 @@
       },
       "default": [],
       "description": "Arbitrary extra Kubernetes manifests to deploy alongside the chart."
+    },
+    "skillFiles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Skill slug used as the directory name under workspace/skills/."
+          },
+          "configMapName": {
+            "type": "string",
+            "description": "Name of the ConfigMap containing the skill content."
+          },
+          "key": {
+            "type": "string",
+            "default": "SKILL.md",
+            "description": "Key inside the ConfigMap that holds the SKILL.md content."
+          }
+        },
+        "required": ["name", "configMapName", "key"]
+      },
+      "default": [],
+      "description": "Skill ConfigMaps to mount into workspace/skills/<name>/SKILL.md."
     }
   },
   "additionalProperties": false
