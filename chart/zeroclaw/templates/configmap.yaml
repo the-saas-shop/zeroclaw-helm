@@ -135,6 +135,8 @@ data:
     max_history_messages = {{ .Values.config.agent.maxHistoryMessages }}
     parallel_tools = {{ .Values.config.agent.parallelTools }}
     tool_dispatcher = {{ .Values.config.agent.toolDispatcher | quote }}
+    allowed_tools = {{ include "zeroclaw.tomlStringList" .Values.config.agent.allowedTools }}
+    denied_tools = {{ include "zeroclaw.tomlStringList" .Values.config.agent.deniedTools }}
 
     # ── Reliability ───────────────────────────────────────────
     [reliability]

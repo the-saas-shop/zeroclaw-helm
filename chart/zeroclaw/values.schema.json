@@ -920,6 +920,18 @@
               "type": "string",
               "default": "auto",
               "description": "Tool dispatch strategy."
+            },
+            "allowedTools": {
+              "type": "array",
+              "items": { "type": "string" },
+              "default": [],
+              "description": "Allowlist tools for the main agent. When non-empty, only listed tools are included."
+            },
+            "deniedTools": {
+              "type": "array",
+              "items": { "type": "string" },
+              "default": [],
+              "description": "Denylist tools for the main agent. Applied after allowed_tools."
             }
           },
           "additionalProperties": false

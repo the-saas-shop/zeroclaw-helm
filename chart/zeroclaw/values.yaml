@@ -234,6 +234,8 @@ config:
     maxHistoryMessages: 50
     parallelTools: false
     toolDispatcher: auto
+    allowedTools: []
+    deniedTools: []
 
   # ── Reliability ─────────────────────────────────────────────
   reliability:
